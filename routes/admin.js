@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
+/* GET users listing. */
 router.get('/', function(req, res, next) {
   let products=[
     {
@@ -17,7 +17,7 @@ router.get('/', function(req, res, next) {
       image:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcwavOBbV-dOKHQQXJtm3kTTEf711qiKspyQ&usqp=CAU"
     },
     {
-      name:"Moto G9 Plus",
+      name:"Moto G9",
       category:"Mobile",
       description:"This is Lenovo Company product",
       image:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT44z2DEfVEnnyWH4_FylCd075USV9u-OD4rg&usqp=CAU"
@@ -31,7 +31,17 @@ router.get('/', function(req, res, next) {
 
     },
   ]
-  res.render('index', { products,admin:false });
+  res.render('admin/view-products',{admin:true,products})
 });
+
+router.get('/add-product',function(req,res){
+  res.render('admin/add-product')
+
+})
+
+router.post('/add-product',(req,res)=>{
+  console.log(req.body)
+  console.log(req.files.Image)
+})
 
 module.exports = router;
