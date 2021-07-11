@@ -12,7 +12,11 @@ var hbs=require('express-handlebars')
 var app = express();
 
 var fileUpload = require('express-fileupload') // npm i  express-fileupload // for uploading image files to server
+
 var db=require('./config/connection')
+
+var session=require('express-session')
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -26,6 +30,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(fileUpload()) 
+
+app.use(session({secret:"Key",cookie:{maxAge:600000}}))
 
 db.connect((err)=>{
   if(err)
