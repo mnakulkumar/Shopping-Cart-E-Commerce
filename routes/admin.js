@@ -26,13 +26,30 @@ router.post('/add-product',(req,res)=>{
     let image=req.files.Image
     image.mv('./public/product-images/'+id+'.jpg',(err,done)=>{ //to move images into separate folder
       if(!err){
-        res.render
+        res.redirect('/admin/')
       }else{
         console.log(err);
       }
     }) //mv move which  is a function in middleware fileUpload
-    res.render("admin/add-product")
+    
   })
 })
+
+router.get('/delete-product/:id',(req,res)=>{ //here id is param
+  let proId=req.params.id  //proId is product id , value in URL is accessed using req.params (when whe don't use query in URL i.e. ?id=value
+  console.log(proId)
+  productHelpers.deleteProduct(proId).then((response)=>{
+    res.redirect('/admin/')
+  })
+
+})
+
+//Another way of doing
+// router.get('/delete-product/',(req,res)=>{ 
+//   let proId=req.query.id   // in the case when we use href="/admin/delete-product?id={{this._id}}&name="Samsung"
+//   console.log(proId)
+//   console.log(req.query.name)
+
+// })
 
 module.exports = router;
