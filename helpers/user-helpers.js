@@ -39,26 +39,44 @@ module.exports={
     },
 
     addToCart:(proId,userId)=>{
+        let proObj={
+            item:objectId(proId),
+            quantity:1
+        }
         return new Promise(async(resolve,reject)=>{
-            let userCart= await db.get().collection(collection.CART_COLLECTION).findOne({user:objectId(userId)})
-            console.log("1.USER_CART = "+userCart)
+            let userCart= await db.get().collection(collection.CART_COLLECTION).findOne({user:objectId(userId)}) 
+             // console.log("USER_CART = "+JSON.stringify(userCart))
 
-            if(userCart){
-                console.log("USER_CART = "+JSON.stringify(userCart))
-                db.get().collection(collection.CART_COLLECTION)
-                .updateOne({user:objectId(userId)},
+
+            if(userCart){ // to check if there is a cart for the given user
+                let proExist=userCart.products.findIndex(product=>product.item==proId)//findindex 's product works like "for each" if "0" product is there if "-1" product is not there
+                console.log(proExist);
+                if(proExist!=-1){ // products array is not empty i.e the given product is already in array, so we should increment the quantity of the given product
+                    db.get().collection(collection.CART_COLLECTION)
+                    .updateOne({'products.item':objectId(proId)},
                     {
-                        $push:{products:objectId(proId)}
-                        
+                        $inc:{'products.$.quantity':1}
                     }
-                    
-                ).then((response)=>{
-                    resolve()
-                })
-            }else{
+                    ).then(()=>{
+                        resolve()
+                    })
+                }else{ // if the cart doesn't have the product we just added
+
+                    db.get().collection(collection.CART_COLLECTION)
+                    .updateOne({user:objectId(userId)},
+                        {
+                            $push:{products:proObj}
+                            
+                        }
+                        
+                    ).then((response)=>{
+                        resolve()
+                    })
+                }
+            }else{//if there is no cart for the user
                 let cartObj={
                     user:objectId(userId),
-                    products:[objectId(proId)]
+                    products:[proObj]
                 }
                 db.get().collection(collection.CART_COLLECTION).insertOne(cartObj).then((response)=>{
                     resolve()
@@ -74,26 +92,27 @@ module.exports={
                     $match:{user:objectId(userId)}
                 },
                 {
+                    $unwind:'$products'
+                },
+                {
+                    $project:{
+                        item:'$products.item',
+                        quantity:'$products.quantity'
+                    }
+                },
+                {
                     $lookup:{
-                        from:collection.PRODUCT_COLLECTION,// from product collection
-                        let:{proList:'$products'}, // in cart collection
-                        pipeline:[
-                            {
-                                $match:{
-                                    $expr:{
-                                        $in:['$_id',"$$proList"] //_id is in products collection whereas proList is in cart collection
-                                    }
-                                }
-
-                            }
-                            
-                        ],
-                        as:'cartItems'
+                        from:collection.PRODUCT_COLLECTION,
+                        localField:'item', //projected item in cart
+                        foreignField:'_id', //-_id in product collection
+                        as:'product'
 
                     }
-                }
+                }                
             ]).toArray()
-            resolve(cartItems[0].cartItems)
+            console.log("~~~~CART ITEMS >>> "+JSON.stringify(cartItems))
+            console.log(JSON.stringify(cartItems[0].product) +"\n"+ JSON.stringify(cartItems[1].product)+"\n"+JSON.stringify(cartItems[2].product));
+            resolve(cartItems)
         })
     },
     getCartCount:(userId)=>{
@@ -109,3 +128,26 @@ module.exports={
 
 
 }
+
+
+
+
+// {
+                //     $lookup:{
+                //         from:collection.PRODUCT_COLLECTION,// from product collection
+                //         let:{proList:'$products'}, // in cart collection
+                //         pipeline:[
+                //             {
+                //                 $match:{
+                //                     $expr:{
+                //                         $in:['$_id',"$$proList"] //_id is in products collection whereas proList is in cart collection
+                //                     }
+                //                 }
+
+                //             }
+                            
+                //         ],
+                //         as:'cartItems'
+
+                //     }
+                // }
